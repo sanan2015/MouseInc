@@ -60,13 +60,13 @@ public:
 
         return result;
     }
-    inline int GetDistance(POINT a, POINT b)
+    static int GetDistance(POINT a, POINT b)
     {
         int s = (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y);
         return _floor(SquareRootFloat((float)s));
     }
 private:
-    inline float SquareRootFloat(float number)
+    static float SquareRootFloat(float number)
     {
         long i;
         float x, y;
@@ -79,7 +79,7 @@ private:
         y  = y * ( f - ( x * y * y ) );
         return number * y;
     }
-    inline int _floor(float f)
+    static int _floor(float f)
     {
         int a         = *(int*)(&f);
         int sign      = (a>>31);

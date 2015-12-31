@@ -1,6 +1,8 @@
 ﻿#include "LayeredWindowUtils.h"
 
 #define WM_USER_SHOW (WM_USER + 1)
+#define WM_USER_UPDATE (WM_USER + 2)
+#define WM_USER_END (WM_USER + 3)
 
 class GestureWindow :
     public ATL::CWindowImpl<GestureWindow>,
@@ -13,6 +15,8 @@ public:
         MSG_WM_CREATE(OnCreate)
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
         MESSAGE_HANDLER(WM_USER_SHOW, OnUserShow)
+        MESSAGE_HANDLER(WM_USER_UPDATE, OnUserUpdate)
+        MESSAGE_HANDLER(WM_USER_END, OnUserEnd)
     END_MSG_MAP()
 
     void DrawGestureTrack(Graphics &graphics)
@@ -43,7 +47,7 @@ public:
         size_t max_count = ::GetSystemMetrics(SM_CXSCREEN) / image_up->GetWidth();
         size_t count = min(max_count, command.length());
 
-		int x = (::GetSystemMetrics(SM_CXSCREEN) - image_up->GetWidth() * (int)count) / 2;
+        int x = (::GetSystemMetrics(SM_CXSCREEN) - image_up->GetWidth() * (int)count) / 2;
 
         int y = ::GetSystemMetrics(SM_CYSCREEN) - 200;
         for (size_t i = 0; i < count; ++i)
@@ -117,26 +121,30 @@ public:
         CenterWindow();
 
         DoUpdateWindow();
-        
+
         ShowWindow(SW_SHOW);
         return 0;
     }
 
-    void Update()
+    LRESULT OnUserUpdate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
     {
         DoUpdateWindow();
+        return 0;
     }
 
-    void End(std::wstring &command)
+    LRESULT OnUserEnd(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
     {
+        std::wstring command = (wchar_t*)wParam;
+
         ShowWindow(SW_HIDE);
-        if (command.empty()) return;
+        if (command.empty()) return 0;
 
         std::wstring action = GetAction(command);
-        if (action.empty()) return;
+        if (action.empty()) return 0;
 
-		current_aciton = action;
-		::PostMessage(main_window, WM_USER + 1, NULL, NULL);
+        current_aciton = action;
+        ::PostMessage(main_window, WM_USER + 1, NULL, NULL);
+        return 0;
     }
 
 private:
@@ -175,7 +183,7 @@ private:
         {
             action = Config::GetStr(L"GlobalGesture", command.c_str());
         }
-                
+
         return action;
     }
 

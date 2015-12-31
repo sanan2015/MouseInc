@@ -110,7 +110,7 @@ void MoveWnd(HWND hwnd, int posx, int posy)
 {
     //不要移动桌面等窗口
     if( IsDesktop(hwnd) ) return;
-    
+
     RECT rect;
     ::GetWindowRect(hwnd, &rect);
 
@@ -181,13 +181,10 @@ void SendKey(std::wstring &keys)
             else vk = LOWORD(VkKeyScan(key[0]));
         }
         //解析F1-F24功能键
-        else if (key[0] == 'F' || key[0] == 'f')
+        else if ( (key[0] == 'F' || key[0] == 'f') && isdigit(key[1]) )
         {
-            if (isdigit(key[1]))
-            {
-                int FX = _ttoi(&key[1]);
-                if (FX >= 1 && FX <= 24) vk = VK_F1 + FX - 1;
-            }
+            int FX = _ttoi(&key[1]);
+            if (FX >= 1 && FX <= 24) vk = VK_F1 + FX - 1;
         }
         // 解析其他按键
         else
@@ -241,7 +238,7 @@ void SendKey(std::wstring &keys)
     {
         input.ki.dwFlags |= KEYEVENTF_KEYUP;
     }
-	::SendInput((UINT)inputs.size(), &inputs[0], sizeof(INPUT));
+    ::SendInput((UINT)inputs.size(), &inputs[0], sizeof(INPUT));
 }
 
 void ParseHotkey(std::wstring &keys, int &mo, int &vk)
@@ -369,7 +366,7 @@ std::string utf16to8( const wchar_t* src )
 {
     std::vector<char> buffer;
     buffer.resize(WideCharToMultiByte(CP_UTF8, 0, src, -1,  NULL, 0, NULL, NULL));
-	WideCharToMultiByte(CP_UTF8, 0, src, -1, &buffer[0], (int)buffer.size(), NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, src, -1, &buffer[0], (int)buffer.size(), NULL, NULL);
     return std::string(&buffer[0]);
 }
 
@@ -427,22 +424,22 @@ bool LoadFromResource(const wchar_t *type, const wchar_t *name, Function f)
 
 bool ImageFromIDResource(const wchar_t *name, Image *&pImg)
 {
-	LoadFromResource(L"PNG", name, [&](const char *data, DWORD size)
-	{
-		HGLOBAL m_hMem = GlobalAlloc(GMEM_FIXED, size);
-		BYTE* pmem = (BYTE*)GlobalLock(m_hMem);
-		memcpy(pmem, data, size);
-		GlobalUnlock(m_hMem);
+    LoadFromResource(L"PNG", name, [&](const char *data, DWORD size)
+    {
+        HGLOBAL m_hMem = GlobalAlloc(GMEM_FIXED, size);
+        BYTE* pmem = (BYTE*)GlobalLock(m_hMem);
+        memcpy(pmem, data, size);
+        GlobalUnlock(m_hMem);
 
-		IStream* pstm;
-		CreateStreamOnHGlobal(m_hMem, FALSE, &pstm);
+        IStream* pstm;
+        CreateStreamOnHGlobal(m_hMem, FALSE, &pstm);
 
-		pImg = Image::FromStream(pstm);
+        pImg = Image::FromStream(pstm);
 
-		pstm->Release();
-		GlobalFree(m_hMem);
-	});
-	return TRUE;
+        pstm->Release();
+        GlobalFree(m_hMem);
+    });
+    return TRUE;
 }
 
 #define BUFSIZE 512
@@ -509,13 +506,13 @@ HRESULT InitializeVirtualDesktopManagerInternal() {
     IServiceProvider* pServiceProvider = nullptr;
     if (FAILED(::CoCreateInstance(CLSID_ImmersiveShell, NULL, CLSCTX_LOCAL_SERVER, __uuidof(IServiceProvider), (PVOID*)&pServiceProvider))) {
         return E_FAIL;
-	}
-	if (FAILED(pServiceProvider->QueryService(CLSID_VirtualDesktopAPI_Unknown, &pDesktopManagerInternal))) {
-		return E_FAIL;
-	}
-	if (FAILED(pServiceProvider->QueryService(__uuidof(IVirtualDesktopManager), &pDesktopManager))) {
-		return E_FAIL;
-	}
+    }
+    if (FAILED(pServiceProvider->QueryService(CLSID_VirtualDesktopAPI_Unknown, &pDesktopManagerInternal))) {
+        return E_FAIL;
+    }
+    if (FAILED(pServiceProvider->QueryService(__uuidof(IVirtualDesktopManager), &pDesktopManager))) {
+        return E_FAIL;
+    }
 
     return S_OK;
 }
@@ -526,38 +523,38 @@ HRESULT GetCurrentDesktop(UINT &num) {
         return E_FAIL;
     }
 
-	HRESULT hres = E_FAIL;
+    HRESULT hres = E_FAIL;
 
     IVirtualDesktop *pCurrentDesktop;
-	pDesktopManagerInternal->GetCurrentDesktop(&pCurrentDesktop);
-	
-	GUID current_guid = { 0 };
-	pCurrentDesktop->GetID(&current_guid);
+    pDesktopManagerInternal->GetCurrentDesktop(&pCurrentDesktop);
 
-	UINT count;
-	if (SUCCEEDED(pDesktops->GetCount(&count)))
-	{
-		for (UINT i = 0; i < count; i++)
-		{
-			IVirtualDesktop *pDesktop;
-			if (SUCCEEDED(pDesktops->GetAt(i, __uuidof(IVirtualDesktop), (void**)&pDesktop))) {
+    GUID current_guid = { 0 };
+    pCurrentDesktop->GetID(&current_guid);
 
-				GUID guid = { 0 };
-				pDesktop->GetID(&guid);
-				if (guid == current_guid)
-				{
-					num = i;
-					hres = S_OK;
-					break;
-				}
+    UINT count;
+    if (SUCCEEDED(pDesktops->GetCount(&count)))
+    {
+        for (UINT i = 0; i < count; i++)
+        {
+            IVirtualDesktop *pDesktop;
+            if (SUCCEEDED(pDesktops->GetAt(i, __uuidof(IVirtualDesktop), (void**)&pDesktop))) {
 
-				pDesktop->Release();
-			}
-		}
+                GUID guid = { 0 };
+                pDesktop->GetID(&guid);
+                if (guid == current_guid)
+                {
+                    num = i;
+                    hres = S_OK;
+                    break;
+                }
 
-	}
-	
-	pCurrentDesktop->Release();
+                pDesktop->Release();
+            }
+        }
+
+    }
+
+    pCurrentDesktop->Release();
 
     return hres;
 }
@@ -584,26 +581,26 @@ HRESULT SwitchVirtualDesktop(UINT num)
 }
 
 HRESULT SendtoVirtualDesktop(HWND hwnd, UINT num) {
-	IObjectArray *pDesktops;
-	if (pDesktopManagerInternal == nullptr || pDesktopManager == nullptr || FAILED(pDesktopManagerInternal->GetDesktops(&pDesktops))) {
-		return E_FAIL;
-	}
+    IObjectArray *pDesktops;
+    if (pDesktopManagerInternal == nullptr || pDesktopManager == nullptr || FAILED(pDesktopManagerInternal->GetDesktops(&pDesktops))) {
+        return E_FAIL;
+    }
 
-	HRESULT hres = S_OK;
-	IVirtualDesktop *pDesktop;
+    HRESULT hres = S_OK;
+    IVirtualDesktop *pDesktop;
 
-	if (SUCCEEDED(pDesktops->GetAt(num, __uuidof(IVirtualDesktop), (void**)&pDesktop))) {
-		GUID guid = { 0 };
-		pDesktop->GetID(&guid);
-		hres = pDesktopManager->MoveWindowToDesktop(hwnd, guid);
-		//wchar_t xx[123];
-		//wsprintf(xx, L"hres:%X", hres);
-		//OutputDebugString(xx);
-		pDesktop->Release();
-	}
-	else {
-		hres = E_FAIL;
-	}
+    if (SUCCEEDED(pDesktops->GetAt(num, __uuidof(IVirtualDesktop), (void**)&pDesktop))) {
+        GUID guid = { 0 };
+        pDesktop->GetID(&guid);
+        hres = pDesktopManager->MoveWindowToDesktop(hwnd, guid);
+        //wchar_t xx[123];
+        //wsprintf(xx, L"hres:%X", hres);
+        //OutputDebugString(xx);
+        pDesktop->Release();
+    }
+    else {
+        hres = E_FAIL;
+    }
 
-	return hres;
+    return hres;
 }

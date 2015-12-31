@@ -8,7 +8,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
     ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
     ImmDisableIME(-1);
-    
+
     // 检查单例，并通知旧程序
     HANDLE mutex = ::CreateMutex(NULL, TRUE, repeat_run);
     if (::GetLastError() == ERROR_ALREADY_EXISTS)
@@ -19,7 +19,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-	InitializeVirtualDesktopManagerInternal();
+    InitializeVirtualDesktopManagerInternal();
 
     // 加载lua引擎
     lua_engine = new LuaEngine();
@@ -34,7 +34,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
     // wnd.ShowWindow(nCmdShow);
-    
+
     // 消息循环
     WTL::CMessageLoop msgLoop;
     int ret = msgLoop.Run();
